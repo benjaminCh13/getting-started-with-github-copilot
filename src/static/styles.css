@@ -142,3 +142,41 @@ footer {
   padding: 20px;
   color: #666;
 }
+
+/* Participants section */
+.participants {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f4f6f8;
+  border-radius: 6px;
+}
+
+.participants ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.participant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.remove-btn {
+  background: none;
+  border: none;
+  color: crimson;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.remove-btn:hover {
+  transform: scale(1.1);
+}
+
+.empty {
+  color: gray;
+  font-style: italic;
+}

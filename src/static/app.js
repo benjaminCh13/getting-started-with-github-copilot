@@ -4,17 +4,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
-  // Function to fetch activities from API
+  // Fetch activities
   async function fetchActivities() {
     try {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear previous content
       activitiesList.innerHTML = "";
       activitySelect.innerHTML = "";
 
-      // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
@@ -22,37 +20,37 @@ document.addEventListener("DOMContentLoaded", () => {
         const spotsLeft =
           details.max_participants - details.participants.length;
 
-        // Generate participants list
         const participantsList = details.participants.length
           ? details.participants
               .map(
                 (p) => `
-            <li style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              ${p}
-              <button onclick="unregister('${name}', '${p}')" 
-                style="background:none; border:none; cursor:pointer; color:red;">
-                ❌
-              </button>
-            </li>
-          `
+                  <li class="participant-item">
+                    ${p}
+                    <button class="remove-btn" onclick="unregister('${name}', '${p}')">
+                      ❌
+                    </button>
+                  </li>
+                `
               )
               .join("")
-          : "<li>No participants yet</li>";
+          : `<li class="participant-item empty">No participants yet</li>`;
 
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          <h5>Participants:</h5>
-          <ul style="list-style: none; padding-left: 0;">
-            ${participantsList}
-          </ul>
+
+          <div class="participants">
+            <h5>Participants:</h5>
+            <ul>
+              ${participantsList}
+            </ul>
+          </div>
         `;
 
         activitiesList.appendChild(activityCard);
 
-        // Add option to select dropdown
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
@@ -65,20 +63,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Unregister function
+  // Unregister participant
   window.unregister = async function (activityName, email) {
     try {
       const response = await fetch(
-        `/activities/${encodeURIComponent(
-          activityName
-        )}/signup?email=${encodeURIComponent(email)}`,
-        {
-          method: "DELETE",
-        }
+        `/activities/${encodeURIComponent(activityName)}/signup?email=${encodeURIComponent(email)}`,
+        { method: "DELETE" }
       );
 
       if (response.ok) {
-        fetchActivities(); // Refresh activities
+        fetchActivities();
       } else {
         console.error("Failed to unregister");
       }
@@ -87,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Handle form submission
+  // Handle signup
   signupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -96,12 +90,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const response = await fetch(
-        `/activities/${encodeURIComponent(
-          activity
-        )}/signup?email=${encodeURIComponent(email)}`,
-        {
-          method: "POST",
-        }
+        `/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
+        { method: "POST" }
       );
 
       const result = await response.json();
@@ -110,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
-        fetchActivities(); // 🔥 Refresh after signup
+        fetchActivities();
       } else {
         messageDiv.textContent =
           result.detail || "An error occurred";
@@ -131,6 +121,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Initialize app
   fetchActivities();
 });
