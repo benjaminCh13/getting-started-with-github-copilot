@@ -10,21 +10,44 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch("/activities");
       const activities = await response.json();
 
-      // Clear loading message
+      // Clear previous content
       activitiesList.innerHTML = "";
+      activitySelect.innerHTML = "";
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
-        const spotsLeft = details.max_participants - details.participants.length;
+        const spotsLeft =
+          details.max_participants - details.participants.length;
+
+        // Generate participants list
+        const participantsList = details.participants.length
+          ? details.participants
+              .map(
+                (p) => `
+            <li style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              ${p}
+              <button onclick="unregister('${name}', '${p}')" 
+                style="background:none; border:none; cursor:pointer; color:red;">
+                ❌
+              </button>
+            </li>
+          `
+              )
+              .join("")
+          : "<li>No participants yet</li>";
 
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <h5>Participants:</h5>
+          <ul style="list-style: none; padding-left: 0;">
+            ${participantsList}
+          </ul>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -36,10 +59,33 @@ document.addEventListener("DOMContentLoaded", () => {
         activitySelect.appendChild(option);
       });
     } catch (error) {
-      activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
+      activitiesList.innerHTML =
+        "<p>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
     }
   }
+
+  // Unregister function
+  window.unregister = async function (activityName, email) {
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(
+          activityName
+        )}/signup?email=${encodeURIComponent(email)}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        fetchActivities(); // Refresh activities
+      } else {
+        console.error("Failed to unregister");
+      }
+    } catch (error) {
+      console.error("Error unregistering:", error);
+    }
+  };
 
   // Handle form submission
   signupForm.addEventListener("submit", async (event) => {
@@ -50,7 +96,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const response = await fetch(
-        `/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
+        `/activities/${encodeURIComponent(
+          activity
+        )}/signup?email=${encodeURIComponent(email)}`,
         {
           method: "POST",
         }
@@ -62,19 +110,21 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // 🔥 Refresh after signup
       } else {
-        messageDiv.textContent = result.detail || "An error occurred";
+        messageDiv.textContent =
+          result.detail || "An error occurred";
         messageDiv.className = "error";
       }
 
       messageDiv.classList.remove("hidden");
 
-      // Hide message after 5 seconds
       setTimeout(() => {
         messageDiv.classList.add("hidden");
       }, 5000);
     } catch (error) {
-      messageDiv.textContent = "Failed to sign up. Please try again.";
+      messageDiv.textContent =
+        "Failed to sign up. Please try again.";
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
